@@ -239,14 +239,23 @@ For each step briefly explain **why it was necessary**.
 ✏️ **Describe your preprocessing steps here**
 
 Les étapes de prétraitement suivantes ont été appliquées, dans l'ordre :
+
 •	Nettoyage des noms de colonnes : suppression des espaces et crochets par expression régulière.
+
 •	Conversion des types : forçage de toutes les colonnes de prix et volume en float (errors='coerce' pour transformer les valeurs non-parsables en NaN).
+
 •	Restructuration Long Format : séparation des Calls et Puts (initialement sur la même ligne) en deux ensembles de lignes indépendantes, avec création de la variable binaire Is_Call.
+
 •	Calcul de la variable cible : Option_Price = (BID + ASK) / 2.
+
 •	Filtres de liquidité : exclusion des contrats avec volume = 0 ou DTE = 0.
+
 •	Suppression des NaN résiduels sur les colonnes critiques (IV, BID, ASK).
+
 •	Échantillonnage : tirage aléatoire stratifié de 200 000 contrats (random_state=42) pour contrainte mémoire Google Colab.
+
 •	Normalisation des features : StandardScaler (mean=0, std=1) sur les 5 variables d'entrée, indispensable pour éviter les gradients explosifs entre des variables d'échelles très différentes (STRIKE ~400, DTE ~60, IV ~0.2).
+
 •	Train/Test split : 80% entraînement / 20% test (split aléatoire).
 
 ---
