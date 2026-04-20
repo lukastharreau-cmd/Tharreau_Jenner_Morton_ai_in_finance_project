@@ -169,8 +169,11 @@ Examples:
 ✏️ **Describe the column types here**
 
 Le dataset contient exclusivement des variables numériques, aucune variable textuelle, ordinale ou de type time-series n’est utilisée directement comme feature dans le modèle :
+
 ●	Numériques continus : UNDERLYING_LAST (prix spot, ~350–480 $), STRIKE (prix d’exercice, ~300–550 $), IV (volatilité implicite, ~0,10–1,50), Option_Price (variable cible, ~0,01–200 $) BID / ASK, Delta, Gamma etc. Au total 33 colonnes.
+
 ●	Numérique entier : DTE (Days to Expiry, de 1 à ~500 jours).
+
 ●	Binaire (cas particulier de catégorielle) : Is_Call (1 = Call, 0 = Put), encodée directement en entier, sans one-hot encoding nécessaire grâce à sa nature binaire.
 
 Note : La variable QUOTE_DATE (date de cotation) est présente dans le dataset brut mais n’est pas utilisée comme feature, elle sert uniquement à la sélection de la période 2020–2022. Le dataset ne modélise donc pas de dépendance temporelle explicite ; DTE capte indirectement la dimension temporelle propre à chaque contrat.
