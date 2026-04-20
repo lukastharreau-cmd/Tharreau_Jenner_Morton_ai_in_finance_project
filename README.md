@@ -194,7 +194,11 @@ Examples:
 
 ✏️ **Describe the data distribution here**
 
-La distribution des prix d'options est fortement asymétrique à droite (right-skewed) : la majorité des contrats sont des options bon marché Out-of-the-Money (OTM) à faible prix, avec une longue queue de distribution pour les options deep In-the-Money (ITM) très chères. Les corrélations clés observées : IV et STRIKE sont négativement corrélés (−0,52), tandis que DTE et IV sont positivement corrélés avec Option_Price.
+La distribution des prix d'options, qui constitue notre variable cible, est fortement asymétrique à droite. La grande majorité des contrats correspondent à des options Out-of-the-Money (OTM) dont le prix est faible, souvent inférieur à quelques dollars, tandis qu'une minorité d'options deep In-the-Money (ITM) atteignent des prix de plusieurs centaines de dollars. Cette asymétrie est une caractéristique fondamentale des marchés d'options et justifie l'utilisation de la MAE plutôt que de la RMSE comme métrique principale, car cette dernière serait trop influencée par ces valeurs extrêmes.
+
+Concernant les variables d'entrée, UNDERLYING_LAST et STRIKE évoluent toutes deux dans une plage similaire, approximativement entre 300 $ et 550 $ sur la période 2020–2022, ce qui reflète les niveaux de l'ETF SPY durant cette période. La variable IV (volatilité implicite) présente également une distribution asymétrique : les valeurs sont concentrées autour de 0,20–0,40 en période normale, mais atteignent des niveaux bien supérieurs lors du krach COVID de mars 2020, créant une queue de distribution importante vers la droite. DTE varie de 1 à environ 500 jours, avec une concentration marquée sur les échéances courtes (moins de 60 jours), qui sont historiquement les plus échangées sur le marché des options.
+
+Sur la question de l'équilibre entre Calls et Puts, le dataset est relativement équilibré après restructuration en format long, ce qui évite tout biais lié à une sur-représentation d'un type d'option. Enfin, parmi les corrélations notables, IV et STRIKE sont négativement corrélés (−0,52), ce qui traduit le phénomène bien connu du smile de volatilité : les options à strike bas tendent à avoir une volatilité implicite plus élevée. DTE et IV sont quant à eux positivement corrélés avec Option_Price, ce qui est cohérent avec la théorie financière.
 
 ---
 
