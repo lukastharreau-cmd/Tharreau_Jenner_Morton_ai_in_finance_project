@@ -170,13 +170,13 @@ Examples:
 
 Le dataset contient exclusivement des variables numériques, aucune variable textuelle, ordinale ou de type time-series n’est utilisée directement comme feature dans le modèle :
 
-●	Numériques continus : UNDERLYING_LAST (prix spot, ~350–480 $), STRIKE (prix d’exercice, ~300–550 $), IV (volatilité implicite, ~0,10–1,50), Option_Price (variable cible, ~0,01–200 $) BID / ASK, Delta, Gamma etc. Au total 33 colonnes.
+•	Numériques continus : UNDERLYING_LAST (prix spot, ~350–480 $), STRIKE (prix d’exercice, ~300–550 $), IV (volatilité implicite, ~0,10–1,50), Option_Price (variable cible, ~0,01–200 $) BID / ASK, Delta, Gamma etc. Au total 33 colonnes.
 
-●	Numérique entier : DTE (Days to Expiry, de 1 à ~500 jours).
+•	Numérique entier : DTE (Days to Expiry, de 1 à ~500 jours).
 
-●	Binaire (cas particulier de catégorielle) : Is_Call (1 = Call, 0 = Put), encodée directement en entier, sans one-hot encoding nécessaire grâce à sa nature binaire.
+•	Binaire (cas particulier de catégorielle) : Is_Call (1 = Call, 0 = Put), encodée directement en entier, sans one-hot encoding nécessaire grâce à sa nature binaire.
 
-Note : La variable QUOTE_DATE (date de cotation) est présente dans le dataset brut mais n’est pas utilisée comme feature, elle sert uniquement à la sélection de la période 2020–2022. Le dataset ne modélise donc pas de dépendance temporelle explicite ; DTE capte indirectement la dimension temporelle propre à chaque contrat.
+NB : La variable QUOTE_DATE (date de cotation) est présente dans le dataset brut mais n’est pas utilisée comme feature, elle sert uniquement à la sélection de la période 2020–2022. Le dataset ne modélise donc pas de dépendance temporelle explicite ; DTE capte indirectement la dimension temporelle propre à chaque contrat.
 
 ---
 
@@ -212,11 +212,17 @@ Examples:
 ✏️ **Describe any data quality issues here**
 
 Plusieurs problèmes de qualité ont été identifiés et traités :
+
 •	Noms de colonnes malformés dans le CSV brut (espaces, crochets) → nettoyés par regex
+
 •	Colonnes numériques lues comme strings par Pandas → converties avec pd.to_numeric(errors='coerce')
+
 •	Contrats illiquides (volume = 0) → filtrés (bruit de prix stale)
+
 •	Options 0-DTE (expirant le jour même) → exclues (comportement Gamma instable)
+
 •	Valeurs manquantes sur IV, BID, ASK → supprimées par dropna()
+
 •	Données initiales en format 'large' (Call + Put sur la même ligne) → restructurées en format 'long'
 
 ---
@@ -282,6 +288,12 @@ Examples:
 
 ✏️ **List and describe the models used**
 
+Deux modèles ont été utilisés dans ce projet, avec des rôles distincts.
+
+Le premier est le modèle de Black-Scholes-Merton (1973), qui joue le rôle de baseline. Il s'agit d'une formule analytique fermée qui calcule le prix théorique d'une option européenne à partir de cinq paramètres : le prix du sous-jacent, le prix d'exercice, le temps avant échéance, la volatilité implicite et le taux sans risque. Nous l'avons implémenté en Python avec scipy.stats.norm et appliqué séparément aux Calls et aux Puts via la formule BSM standard. Bien que Black-Scholes soit conçu pour des options européennes alors que les options SPY sont américaines, il reste la référence incontournable du marché et constitue donc un point de comparaison légitime et exigeant.
+
+Le second est un MLP (Multilayer Perceptron) implémenté en PyTorch, qui constitue le modèle principal. Il s'agit d'un réseau de neurones fully connected composé de trois couches cachées (64 → 32 → 16 neurones) avec activation ReLU, et d'une couche de sortie à un neurone avec activation Softplus. Le MLP apprend directement depuis les données de marché, sans aucune hypothèse paramétrique sur la distribution des rendements ou la constance de la volatilité. C'est précisément ce qui lui permet de capturer des dynamiques de prix que Black-Scholes ne peut pas modéliser, notamment lors de régimes de volatilité extrêmes comme ceux observés en 2020 et 2022.
+
 ---
 
 ## Modeling Strategy
@@ -295,6 +307,14 @@ Explain:
 - Whether cross-validation was used
 
 ✏️ **Explain your modeling strategy**
+
+Nous avons choisi Black-Scholes comme modèle baseline car il constitue la référence standard en finance pour le pricing d'options. Son utilisation comme point de comparaison est naturelle : si notre modèle de deep learning ne parvient pas à le surpasser, cela remettrait en question l'intérêt de l'approche. Black-Scholes nous fournit donc un seuil minimal de performance à dépasser (MAE = 1,48 $).
+
+Le MLP (Multilayer Perceptron) a été sélectionné comme modèle principal pour plusieurs raisons. D'abord, le pricing d'options est un problème intrinsèquement non-linéaire : la relation entre les Greeks (Delta, Gamma, Vega) et le prix d'une option ne peut pas être capturée par un modèle linéaire. Ensuite, le MLP est particulièrement adapté aux données tabulaires structurées comme les nôtres, contrairement aux CNN ou LSTM qui sont pensés pour des données spatiales ou séquentielles. Enfin, le MLP est largement utilisé dans la littérature académique récente sur le deep learning appliqué au pricing d'options, ce qui rend nos résultats comparables aux travaux existants.
+
+Concernant le tuning des hyperparamètres, nous avons fixé l'architecture (64 → 32 → 16 neurones), le taux d'apprentissage (0,001), la taille de batch (512) et le nombre d'époques (30) sur la base de valeurs standards pour ce type de problème, sans effectuer de recherche systématique par grid search ou random search. Une optimisation plus rigoureuse des hyperparamètres constituerait une amélioration future pertinente.
+
+Enfin, aucune cross-validation n'a été mise en place. Nous avons opté pour un split aléatoire simple 80/20. Il convient de noter qu'un split temporel, par exemple entraîner sur 2020–2021 et tester sur 2022, aurait été méthodologiquement plus robuste pour des données financières, car il éviterait tout risque de data leakage entre des contrats du même jour présents à la fois dans le train et dans le test.
 
 ---
 
@@ -316,6 +336,14 @@ Also explain **why these metrics are appropriate**.
 
 ✏️ **Describe your evaluation metrics**
 
+Deux métriques ont été utilisées dans ce projet, chacune jouant un rôle distinct.
+
+La MAE (Mean Absolute Error) est la métrique principale d'évaluation. Elle mesure l'erreur moyenne en valeur absolue entre le prix prédit et le prix de marché réel, exprimée directement en dollars. C'est la métrique la plus appropriée dans notre contexte pour deux raisons : d'une part, elle est immédiatement interprétable, une MAE de 0,63 $ signifie concrètement que le modèle se trompe en moyenne de 63 centimes par contrat, et d'autre part, elle permet une comparaison directe et intuitive avec le baseline Black-Scholes (MAE = 1,48 $). La MAE est également moins sensible aux valeurs extrêmes que la MSE, ce qui la rend plus représentative de la performance moyenne du modèle sur l'ensemble des contrats.
+
+La MSE (Mean Squared Error) est utilisée comme fonction de perte pendant l'entraînement du MLP, mais pas comme métrique d'évaluation finale. Le choix de la MSE comme loss function est délibéré : en pénalisant les grandes erreurs de manière quadratique, elle pousse l'optimiseur à réduire en priorité les erreurs importantes, notamment sur les options deep In-the-Money dont le prix peut atteindre plusieurs centaines de dollars. Ce comportement est souhaitable en finance, où une erreur de pricing importante sur un seul contrat peut avoir des conséquences significatives.
+
+En résumé, la combinaison MSE (loss d'entraînement) et MAE (métrique d'évaluation) est un choix cohérent : on entraîne le modèle à minimiser les grandes erreurs, et on l'évalue sur sa précision moyenne exprimée dans une unité directement compréhensible.
+
 ---
 
 # 8. Project Structure
@@ -323,8 +351,15 @@ Also explain **why these metrics are appropriate**.
 📌 **Instructions:**  
 Explain how the repository is organized.
 
-
 If you added additional folders, explain them.
+
+Le projet est organisé de manière simple autour de deux fichiers principaux, sans structure de dossiers complexe, ce qui reflète la nature exploratoire et académique du travail réalisé sur Google Colab.
+
+Le fichier central est le notebook IA_in_Finance_Tharreau_Jenner_Morton.ipynb, qui contient l'intégralité de la pipeline : chargement et nettoyage des données, analyse exploratoire, implémentation du baseline Black-Scholes, construction et entraînement du MLP, et évaluation comparative des deux modèles. Tout le code est regroupé dans ce fichier unique, organisé en sections séquentielles correspondant aux grandes étapes du projet.
+
+Le fichier DeepPricing_v3.pptx est la présentation associée au projet. Elle résume en 10 slides la problématique, le dataset, la méthodologie et les résultats obtenus.
+
+Le dataset brut spy_2020_2022.csv n'est pas versionné dans le dépôt. Il est stocké directement sur Google Drive et chargé dans le notebook via un montage Drive (drive.mount). Ce choix s'explique par la taille du fichier, qui dépasse les limites raisonnables pour un versionnement Git classique.
 
 ---
 
@@ -332,6 +367,27 @@ If you added additional folders, explain them.
 
 📌 **Instructions:**  
 Explain how to install project dependencies.
+
+Le projet tourne entièrement sur Google Colab, ce qui signifie que la grande majorité des dépendances sont déjà préinstallées dans l'environnement Colab et ne nécessitent aucune installation manuelle. Il suffit d'ouvrir le notebook et d'exécuter les cellules dans l'ordre.
+
+La seule étape préalable nécessaire est de monter Google Drive pour accéder au dataset, ce qui est géré directement dans la première cellule du notebook :
+pythonfrom google.colab import drive 
+drive.mount('/content/drive')
+
+Le dataset spy_2020_2022.csv doit être placé dans le dossier suivant sur votre Google Drive :
+/content/drive/MyDrive/AI_Finance_Project/spy_2020_2022.csv
+
+Les bibliothèques utilisées dans le projet sont les suivantes, toutes disponibles nativement sur Colab :
+bashpip install pandas numpy matplotlib seaborn scikit-learn torch scipy
+
+Pour toute exécution en local, en dehors de Colab, il est recommandé de créer un environnement virtuel avant d'installer les dépendances :
+bashpython -m venv venv
+
+source venv/bin/activate       # Sur Mac/Linux
+venv\Scripts\activate          # Sur Windows
+
+pip install pandas numpy matplotlib seaborn scikit-learn torch scipy
+
 
 Example:
 
