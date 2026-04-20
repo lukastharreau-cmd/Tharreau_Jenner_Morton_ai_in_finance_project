@@ -382,6 +382,9 @@ drive.mount('/content/drive')
 Le dataset spy_2020_2022.csv doit être placé dans le dossier suivant sur votre Google Drive :
 /content/drive/MyDrive/AI_Finance_Project/spy_2020_2022.csv
 
+Vous pouvez aussi utiliser ce lien pour accéder à la dataset, l'autorisation et l'édition est possible : 
+https://drive.google.com/file/d/13z_aJ2pP5FkGF73ilMMCTS3ufYHMA80I/view?usp=drive_link
+
 Les bibliothèques utilisées dans le projet sont les suivantes, toutes disponibles nativement sur Colab :
 bashpip install pandas numpy matplotlib seaborn scikit-learn torch scipy
 
