@@ -60,7 +60,8 @@ Example goals:
 
 L'objectif du projet est de construire un modèle de deep learning (MLP PyTorch) capable de prédire le prix de marché d'une option SPY (ETF répliquant le S&P 500) à partir de cinq variables financières clés, en surpassant la précision du modèle Black-Scholes mesuré par la Mean Absolute Error (MAE).
 
-Une solution est considérée réussie si la MAE du MLP est inférieure à la MAE baseline de Black-Scholes (1,48 $). Le modèle atteint finalement une MAE de 0,63 $, soit une amélioration de 57 %.
+Une solution est considérée réussie si la MAE du MLP est inférieure à la MAE baseline de Black-Scholes (1,48 $). 
+Le modèle atteint finalement une MAE de 0,63$, soit une amélioration de 57%.
 
 ---
 
