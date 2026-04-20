@@ -1,4 +1,4 @@
-<img width="470" height="150" alt="image" src="https://github.com/user-attachments/assets/4b93f545-de37-414a-807c-0bfc24d94f54" />Deep Pricing — Estimating S&P 500 Options Pricing using Deep Learning
+Deep Pricing — Estimating S&P 500 Options Pricing using Deep Learning
 
 ---
 
